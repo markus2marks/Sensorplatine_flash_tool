@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string.h>
 #include <fstream>
+#include "net_com.h"
 
 #define TFTP_CLIENT_SERVER_TIMEOUT 2000
 
@@ -47,10 +48,11 @@ class TFTPClient
 
 		//- socket'o endpoint'u strukturos
 		struct sockaddr_in client_address;
+		struct sockaddr_in server_address;
 		int connection;
 
 		TFTP_Packet received_packet;
-
+		Net_com m_net;
 	protected:
 
 		int sendBuffer(char *);
