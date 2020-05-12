@@ -29,6 +29,7 @@ class XCsoar_com_if
 		struct sockaddr_in s_xcsoar;
 		XCsoar_com_if(int port);
 		bool connect_to_xcsoar();
+		int send_to_xcsoar(char * client_message, int length);
 };
 
 

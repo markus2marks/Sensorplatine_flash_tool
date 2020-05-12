@@ -1,6 +1,6 @@
 PROJECT_ROOT = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-OBJS = KalmanFilter1d.o openvario_app.o tftp_client.o tftp_packet.o net_com.o XCsoar_com_if.o 
+OBJS = KalmanFilter1d.o openvario_app.o tftp_client.o tftp_packet.o net_com.o XCsoar_com_if.o nmea_converter.o
 
 ifeq ($(BUILD_MODE),debug)
 	CFLAGS += -g 

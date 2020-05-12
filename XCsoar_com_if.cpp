@@ -43,3 +43,8 @@ bool XCsoar_com_if::connect_to_xcsoar()
 	}
 	return ret;
 }
+
+int XCsoar_com_if::send_to_xcsoar(char * client_message, int length)
+{
+   return send(xcsoar_sock, client_message, length, 0);
+}

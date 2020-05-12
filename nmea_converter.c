@@ -66,8 +66,6 @@ bool Compose_Pressure_POV_slow(char *sentence, float static_pressure, float dyna
 	// Calculate NMEA checksum and add to string
 	sprintf(sentence + length, "*%02X\n", NMEA_checksum(sentence));
 
-	//print sentence for debug
-	debug_print("POV slow NMEA sentence: %s\n", sentence);
 	return (success);
 }
 
@@ -113,8 +111,6 @@ int Compose_Pressure_POV_fast(char *sentence, float te_vario)
 	// Calculate NMEA checksum and add to string
 	sprintf(sentence + length, "*%02X\n", NMEA_checksum(sentence));
 
-	//print sentence for debug
-	debug_print("NMEA sentence: %s\n", sentence);
 	return (success);
 }
 
@@ -160,8 +156,6 @@ int Compose_Voltage_POV(char *sentence, float voltage)
 	// Calculate NMEA checksum and add to string
 	sprintf(sentence + length, "*%02X\n", NMEA_checksum(sentence));
 
-	//print sentence for debug
-	debug_print("NMEA sentence: %s\n", sentence);
 	return (success);
 }
 

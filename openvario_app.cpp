@@ -13,7 +13,11 @@
 #include "net_com.h"
 #include <curses.h>
 #include "XCsoar_com_if.h"
-#include "KalmanFilter1d.h"
+extern "C"
+{
+    #include "KalmanFilter1d.h"
+    #include "nmea_converter.h"
+}
 
 #define PORT     7
 #define MAXLINE 1024
@@ -21,6 +25,8 @@
 
 
 using namespace std;
+char nmea_string[256];
+
 
 typedef struct
 {
@@ -53,30 +59,51 @@ int getMilliCount(void)
 	return nCount;
 }
 
-void readValues(Net_com* net)
+void readValues(Net_com* net, XCsoar_com_if* xcsoar_com)
 {
 	struct sensor_data rx_data;
 	int temp_time;
+	int temp_timestamp;
 	int dt;
 	char buf[BUFLEN];
-	t_kalmanfilter1d vkf;
-
+	static t_kalmanfilter1d vkf;
+	KalmanFilter1d_reset(&vkf);
+	vkf.var_x_accel_ = 0.1f;
+	bool ret = xcsoar_com->connect_to_xcsoar();
+	do
+	{
+	    if(ret)
+	    {
+	        cout << "is connected to XCsoar!" << endl;
+	    }
+	    else
+	    {
+	        cout << "is not connected to XCsoar!" << endl;
+	    }
+	} while(!(ret = xcsoar_com->connect_to_xcsoar()));
 	initscr();
 	cbreak();
 	nodelay(stdscr, TRUE);
 	while(getch() <= 0)
 	{
 
-			int r = net->net_com_receive(&rx_data, sizeof(struct sensor_data));
+		int r = net->net_com_receive(&rx_data, sizeof(struct sensor_data));
 
 		if(r > 0)
 		{
 			int i = buf[0];
-			cout << (getMilliCount() - temp_time) << "ms\t"<< "timestamp: " << rx_data.timestamp << "\tid:" << (int)rx_data.id << " p1:" << (int)rx_data.sensor1 << "\n\r";
+			//cout << (getMilliCount() - temp_time) << "ms\t"<< "timestamp: " << rx_data.timestamp << "\tid:" << (int)rx_data.id << " p1:" << (int)rx_data.sensor1 << " p2:" << (int)rx_data.sensor2 << " p3:" << (int)rx_data.sensor3 << "\n\r";
+			temp_timestamp = rx_data.timestamp - temp_timestamp;
+			KalmanFiler1d_update(&vkf, (float)(rx_data.sensor1/100.0f), 0.2f, temp_timestamp/1000.0f);
+			Compose_Pressure_POV_slow(nmea_string,rx_data.sensor1/100.0f, (float)rx_data.sensor3/10000.0*6894.757);
+			cout << nmea_string << "\n\r";
+			xcsoar_com->send_to_xcsoar(nmea_string, strlen(nmea_string));
+			//cout << (float)rx_data.sensor1/100 << "  " << vkf.x_abs_ << "   " << vkf.x_vel_ << "\n\r";
+			//printf("%i\t%.2f\t%.2f\t%.2f\n\r",rx_data.sensor1,vkf.x_abs_,vkf.x_vel_, temp_timestamp/1000.0f);
+			temp_timestamp = rx_data.timestamp;
 		}
 		temp_time = getMilliCount();
-		//KalmanFiler1d_update(&vkf, rx_data.sensor1/100, 0.25, 0.02);
-		//cout << vkf.x_abs_ << "   " << vkf.x_vel_ << endl;
+
 	//			buf[0] = 'A';
 	//			buf[1] = '\0';
 	//			net.net_com_sendto(buf,2);
@@ -224,7 +251,7 @@ int main(void)
 		switch(input)
 		{
 			case '1':
-				readValues(&net);
+				readValues(&net, &xcsoar_com);
 				break;
 
 			case '2':
