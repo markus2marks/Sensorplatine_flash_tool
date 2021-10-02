@@ -13,9 +13,10 @@
 #include "net_com.h"
 #include <curses.h>
 #include "XCsoar_com_if.h"
+#include "KalmanFilter1d.h"
 extern "C"
 {
-    #include "KalmanFilter1d.h"
+
     #include "nmea_converter.h"
 }
 
@@ -38,9 +39,31 @@ struct sensor_data
 {
 	uint8_t id;
 	uint32_t timestamp;
-	uint32_t sensor1;
-	uint32_t sensor2;
-	int32_t sensor3;
+	float sensor1;
+	float sensor2;
+	float sensor3;
+	float sensor4;
+	float sensor5;
+	float sensor1_raw;
+	float sensor2_raw;
+	float sensor3_raw;
+	float sensor4_raw;
+	float sensor5_raw;
+	int32_t sensor6;
+	int32_t sensor7;
+	float temp1;
+	float temp2;
+	float temp3;
+	float temp4;
+	float temp5;
+	int32_t temp6;
+	int32_t temp7;
+	float accel_x;
+	float accel_y;
+	float accel_z;
+	float gyro_x;
+	float gyro_y;
+	float gyro_z;
 };
 
 void mysleep_ms(int milisec)
