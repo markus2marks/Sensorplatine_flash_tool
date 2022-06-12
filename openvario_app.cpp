@@ -12,19 +12,16 @@
 #include <iostream>
 #include "net_com.h"
 #include <curses.h>
-#include "XCsoar_com_if.h"
-#include "KalmanFilter1d.h"
-extern "C"
-{
+#include <wiringPi.h>
+#include "StepperMotor.h"
 
-    #include "nmea_converter.h"
-}
 
 #define PORT     7
 #define MAXLINE 1024
 #define BUFLEN 512	//Max length of buffer
 
-
+// StepperMotor object declaration
+StepperMotor sm;
 using namespace std;
 char nmea_string[256];
 
@@ -82,28 +79,11 @@ int getMilliCount(void)
 	return nCount;
 }
 
-void readValues(Net_com* net, XCsoar_com_if* xcsoar_com)
+void readValues(Net_com* net)
 {
 	struct sensor_data rx_data;
 	int temp_time;
 	int temp_timestamp;
-	int dt;
-	char buf[BUFLEN];
-	static t_kalmanfilter1d vkf;
-	KalmanFilter1d_reset(&vkf);
-	vkf.var_x_accel_ = 0.1f;
-	bool ret = xcsoar_com->connect_to_xcsoar();
-	do
-	{
-	    if(ret)
-	    {
-	        cout << "is connected to XCsoar!" << endl;
-	    }
-	    else
-	    {
-	        cout << "is not connected to XCsoar!" << endl;
-	    }
-	} while(!(ret = xcsoar_com->connect_to_xcsoar()));
 	initscr();
 	cbreak();
 	nodelay(stdscr, TRUE);
@@ -111,25 +91,12 @@ void readValues(Net_com* net, XCsoar_com_if* xcsoar_com)
 	{
 
 		int r = net->net_com_receive(&rx_data, sizeof(struct sensor_data));
-
 		if(r > 0)
 		{
-			int i = buf[0];
-			//cout << (getMilliCount() - temp_time) << "ms\t"<< "timestamp: " << rx_data.timestamp << "\tid:" << (int)rx_data.id << " p1:" << (int)rx_data.sensor1 << " p2:" << (int)rx_data.sensor2 << " p3:" << (int)rx_data.sensor3 << "\n\r";
-			temp_timestamp = rx_data.timestamp - temp_timestamp;
-			KalmanFiler1d_update(&vkf, (float)(rx_data.sensor1/100.0f), 0.2f, temp_timestamp/1000.0f);
-			Compose_Pressure_POV_slow(nmea_string,rx_data.sensor1/100.0f, (float)rx_data.sensor3/10000.0*6894.757);
-			cout << nmea_string << "\n\r";
-			xcsoar_com->send_to_xcsoar(nmea_string, strlen(nmea_string));
-			//cout << (float)rx_data.sensor1/100 << "  " << vkf.x_abs_ << "   " << vkf.x_vel_ << "\n\r";
-			//printf("%i\t%.2f\t%.2f\t%.2f\n\r",rx_data.sensor1,vkf.x_abs_,vkf.x_vel_, temp_timestamp/1000.0f);
+			cout << (getMilliCount() - temp_time) << "ms\t"<< "timestamp: " << (rx_data.timestamp - temp_timestamp) << "\tid:" << (int)rx_data.id << " p1:" << (int)rx_data.sensor1 << " p2:" << (int)rx_data.sensor2 << " p3:" << (int)rx_data.sensor3 << "\n\r";
 			temp_timestamp = rx_data.timestamp;
 		}
 		temp_time = getMilliCount();
-
-	//			buf[0] = 'A';
-	//			buf[1] = '\0';
-	//			net.net_com_sendto(buf,2);
 	}
 	endwin();
 }
@@ -225,17 +192,25 @@ void flash_program(Net_com* net)
 	}
 }
 
-
-void connection_xcsaor(XCsoar_com_if* xcsoar_com)
+void set_StepperMotor(int step)
 {
-	if(xcsoar_com->connect_to_xcsoar())
-	{
-		cout << "is connected to XCsoar!" << endl;
-	}
-	else
-	{
-		cout << "is not connected to XCsoar!" << endl;
-	}
+
+
+    // RPi GPIO | WiringPi
+    // -------------------
+    // GPIO 17  |    0
+    // GPIO 18  |    1
+    // GPIO 27  |    2
+    // GPIO 22  |    3
+    sm.setGPIOutputs(0, 1, 2, 3);
+
+    // NOTE: Before starting, the current position of the
+    // stepper motor corresponds to 0 degrees
+
+    // Rotate of 90 degrees clockwise at 100% of speed
+    sm.run(1, step * 90, 100);
+
+
 }
 
 int main(void)
@@ -247,7 +222,6 @@ int main(void)
 	struct timespec time;
 	float value;
 	net_data send_data, recv_data;
-	XCsoar_com_if xcsoar_com(4352);
 
 
 	char * ip = "192.168.0.2";
@@ -262,6 +236,8 @@ int main(void)
 	char input;
 	net.net_com_connect();
 	diag.net_com_connect();
+    // wiringPi initialization
+    wiringPiSetup();
 
 	while(true)
 	{
@@ -269,12 +245,11 @@ int main(void)
 		cout << "1: read values" << endl;
 		cout << "2: start bootloader" << endl;
 		cout << "3: get Session" << endl;
-		cout << "4: connect to XCsoar" << endl;
 		input = getchar();
 		switch(input)
 		{
 			case '1':
-				readValues(&net, &xcsoar_com);
+				readValues(&net);
 				break;
 
 			case '2':
@@ -283,10 +258,6 @@ int main(void)
 
 			case '3':
 				diag_request(&diag);
-				break;
-
-			case '4':
-				connection_xcsaor(&xcsoar_com);
 				break;
 
 			default:
