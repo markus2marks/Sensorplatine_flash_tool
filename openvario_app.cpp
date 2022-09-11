@@ -12,16 +12,12 @@
 #include <iostream>
 #include "net_com.h"
 #include <curses.h>
-#include <wiringPi.h>
-#include "StepperMotor.h"
 
 
 #define PORT     7
 #define MAXLINE 1024
 #define BUFLEN 512	//Max length of buffer
 
-// StepperMotor object declaration
-StepperMotor sm;
 using namespace std;
 char nmea_string[256];
 
@@ -192,27 +188,6 @@ void flash_program(Net_com* net)
 	}
 }
 
-void set_StepperMotor(int step)
-{
-
-
-    // RPi GPIO | WiringPi
-    // -------------------
-    // GPIO 17  |    0
-    // GPIO 18  |    1
-    // GPIO 27  |    2
-    // GPIO 22  |    3
-    sm.setGPIOutputs(0, 1, 2, 3);
-
-    // NOTE: Before starting, the current position of the
-    // stepper motor corresponds to 0 degrees
-
-    // Rotate of 90 degrees clockwise at 100% of speed
-    sm.run(1, step * 90, 100);
-
-
-}
-
 int main(void)
 {
 	struct sockaddr_in si_me, si_other, server;
@@ -226,8 +201,8 @@ int main(void)
 
 	char * ip = "192.168.0.2";
 	int port = 69;
-	char* source = "Sensorboard.bin";
-	char* destination = "Sensorboard.bin";
+	char* source = "Application.bin";
+	char* destination = "Application.bin";
 	TFTPClient client(ip, port);
 	Net_com net(7,"192.168.0.5","192.168.0.3");
 	Net_com diag(8,"192.168.0.5","192.168.0.3");
@@ -236,8 +211,6 @@ int main(void)
 	char input;
 	net.net_com_connect();
 	diag.net_com_connect();
-    // wiringPi initialization
-    wiringPiSetup();
 
 	while(true)
 	{

@@ -6,9 +6,9 @@ find_package(Curses REQUIRED)
 
 include_directories(${CURSES_INCLUDE_DIR})
 
-add_library(app net_com.cpp tftp_client.cpp tftp_packet.cpp StepperMotor.cpp)
+add_library(app net_com.cpp tftp_client.cpp tftp_packet.cpp)
 
 add_executable(main openvario_app.cpp)
 
-target_link_libraries(main app wiringPi ${CURSES_LIBRARIES})
+target_link_libraries(main app ${CURSES_LIBRARIES})
 
