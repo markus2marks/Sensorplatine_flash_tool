@@ -30,33 +30,15 @@ typedef struct
 
 struct sensor_data
 {
-	uint8_t id;
-	uint32_t timestamp;
-	float sensor1;
-	float sensor2;
-	float sensor3;
-	float sensor4;
-	float sensor5;
-	float sensor1_raw;
-	float sensor2_raw;
-	float sensor3_raw;
-	float sensor4_raw;
-	float sensor5_raw;
-	int32_t sensor6;
-	int32_t sensor7;
-	float temp1;
-	float temp2;
-	float temp3;
-	float temp4;
-	float temp5;
-	int32_t temp6;
-	int32_t temp7;
-	float accel_x;
-	float accel_y;
-	float accel_z;
-	float gyro_x;
-	float gyro_y;
-	float gyro_z;
+    uint32_t counter;
+    uint8_t id;
+    uint32_t timestamp;
+    int32_t sensor1;
+    int32_t sensor2;
+    int32_t sensor3;
+    int32_t temp1;
+    int32_t temp2;
+    int32_t temp3;
 };
 
 void mysleep_ms(int milisec)
@@ -117,8 +99,8 @@ void flash_program(Net_com* net)
 {
 	int tftp_port = 69;
 	char * ip = "192.168.0.3";
-	char* source = "/mnt/c/Users/marku/OneDrive/Dokumente/ARM/Sensorbox-Ethernet/BUILD/Sensorbox-Ethernet.bin";
-	char* destination = "/mnt/c/Users/marku/OneDrive/Dokumente/ARM/Sensorbox-Ethernet/BUILD/Sensorbox-Ethernet.bin";
+	char* source = "Application.bin";
+	char* destination = "Application.bin";
 	TFTPClient client(ip, tftp_port);
 	net_data send_data, recv_data;
 
@@ -144,7 +126,7 @@ void flash_program(Net_com* net)
 		send_data.id = 0x40;
 		net->net_com_sendto(&send_data, sizeof(net_data));
 		cout << "wait for Bootloader\n";
-		usleep(4000000UL);
+		usleep(16000000UL);
 
 		do
 		{
@@ -204,7 +186,7 @@ int main(void)
 	char* source = "Application.bin";
 	char* destination = "Application.bin";
 	TFTPClient client(ip, port);
-	Net_com net(7,"192.168.0.5","192.168.0.3");
+	Net_com net(2000,"192.168.0.5","192.168.0.3");
 	Net_com diag(8,"192.168.0.5","192.168.0.3");
 	send_data.id = 0x10;
 
