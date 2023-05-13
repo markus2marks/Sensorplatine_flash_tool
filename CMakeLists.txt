@@ -8,7 +8,7 @@ include_directories(${CURSES_INCLUDE_DIR})
 
 add_library(app net_com.cpp tftp_client.cpp tftp_packet.cpp)
 
-add_executable(main openvario_app.cpp)
+add_executable(main main.cpp)
 
 target_link_libraries(main app ${CURSES_LIBRARIES})
 

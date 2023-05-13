@@ -1,4 +1,4 @@
-# openvario_app
+# Sensorplatine_flash_tool
 
 Build Command: 
 1 cmake.
